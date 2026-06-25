@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>PPF Install Log</title>
+<style>
+:root{
+  --bg:#1C1E20;
+  --surface:#222427;
+  --surface-2:#2B2D30;
+  --surface-3:#33363A;
+  --border:#3C3F43;
+  --border-soft:#2F3134;
+  --text:#ECEDEE;
+  --text-muted:#94999E;
+  --text-faint:#6B7075;
+  --yellow:#FFC72C;
+  --cyan:#BFE8EE;
+  --green:#4FA88B;
+  --red:#E2574C;
+  --red-soft:#3A2422;
+  --radius:10px;
+  --font-display:"Arial Narrow","Helvetica Neue Condensed","Helvetica Neue",Arial,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"SF Mono","Cascadia Code","Courier New",monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+.app{display:flex;flex-direction:column;min-height:100vh;}
+
+.topbar{padding:16px 18px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--surface),var(--bg));position:sticky;top:0;z-index:5;}
+.brand{font-family:var(--font-display);font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:15px;display:flex;align-items:center;gap:8px;}
+.brand-mark{color:var(--yellow);font-size:18px;}
+
+.main{flex:1;padding:16px 16px calc(100px + env(safe-area-inset-bottom));}
+.sheet{display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto;}
+
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;color:var(--text-faint);text-transform:uppercase;border-bottom:1px solid var(--border-soft);padding-bottom:10px;}
+.eyebrow-danger{color:var(--red);border-color:var(--red-soft);margin-top:4px;}
+
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:13px;color:var(--text-muted);font-weight:600;}
+.req{color:var(--yellow);}
+
+input,textarea,select{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  border-radius:var(--radius);padding:12px 13px;font-size:16px;font-family:var(--font-body);width:100%;
+}
+textarea{resize:vertical;min-height:44px;}
+input::placeholder,textarea::placeholder{color:var(--text-faint);}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--yellow);box-shadow:0 0 0 3px rgba(255,199,44,.18);}
+
+.input-barcode{background-image:repeating-linear-gradient(90deg,rgba(236,237,238,.10) 0,rgba(236,237,238,.10) 1.5px,transparent 1.5px,transparent 5px);font-family:var(--font-mono);letter-spacing:.04em;}
+
+.roll-row{display:flex;gap:8px;}
+.roll-row input{flex:1;}
+.scan-btn{flex:0 0 auto;width:48px;display:flex;align-items:center;justify-content:center;background:var(--yellow);border:none;border-radius:var(--radius);color:#1C1E20;cursor:pointer;}
+.scan-btn:active{transform:scale(.96);}
+
+.temp-row{display:flex;gap:8px;align-items:center;}
+.temp-row input{flex:1;}
+.unit-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;flex:0 0 auto;}
+.unit-toggle button{background:var(--surface-2);color:var(--text-muted);border:none;padding:12px 14px;font-family:var(--font-mono);font-size:14px;cursor:pointer;}
+.unit-toggle button.active{background:var(--yellow);color:#1C1E20;font-weight:700;}
+
+.actions{display:flex;gap:10px;margin-top:6px;}
+.btn{border:none;border-radius:var(--radius);padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-body);}
+.btn-primary{background:var(--yellow);color:#1C1E20;flex:1;}
+.btn-primary:active{transform:scale(.98);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline{background:transparent;border:1px solid var(--yellow);color:var(--yellow);}
+.btn-danger{background:var(--red-soft);color:var(--red);border:1px solid transparent;}
+.btn-danger-outline{background:transparent;border:1px solid var(--red);color:var(--red);}
+
+.log-toolbar{display:flex;gap:10px;margin-bottom:4px;}
+.log-toolbar input[type="search"]{flex:1;}
+.log-toolbar .btn{white-space:nowrap;}
+
+.entry-card{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden;}
+.entry-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;background:none;border:none;padding:14px;text-align:left;cursor:pointer;color:var(--text);}
+.entry-vehicle{font-weight:700;font-size:15px;}
+.entry-sub{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+.entry-roll{font-family:var(--font-mono);font-size:12.5px;color:var(--cyan);border:1px solid var(--border);border-radius:6px;padding:4px 8px;flex-shrink:0;}
+.entry-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border-soft);}
+.entry-card.expanded .entry-body{display:block;padding-top:12px;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+.detail-grid span{display:block;font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.detail-grid strong{font-size:14px;font-weight:600;}
+.entry-issue{margin-top:12px;}
+.entry-issue span{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+.entry-issue p{margin:4px 0 0;font-size:14px;line-height:1.4;}
+.entry-actions{display:flex;gap:8px;margin-top:14px;}
+.entry-actions .btn{padding:9px 14px;font-size:13px;flex:1;}
+
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-muted);border:1px dashed var(--border);border-radius:var(--radius);}
+.empty-title{font-weight:700;color:var(--text);margin-bottom:6px;}
+.empty-sub{font-size:13.5px;}
+
+.hint{font-size:13.5px;color:var(--text-muted);line-height:1.5;margin:0;}
+.add-field-row{display:flex;gap:8px;flex-wrap:wrap;}
+.add-field-row input{flex:1 1 160px;}
+.add-field-row select{flex:0 0 110px;}
+.field-list{display:flex;flex-direction:column;gap:8px;}
+.field-row{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.field-row .tag{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);margin-left:8px;text-transform:uppercase;border:1px solid var(--border);border-radius:4px;padding:2px 6px;}
+.icon-btn{background:none;border:none;color:var(--red);cursor:pointer;padding:6px;}
+.danger-zone{margin-top:18px;display:flex;flex-direction:column;gap:10px;}
+
+.hint-inline{font-size:11px;color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0;}
+.photo-strip{display:flex;gap:10px;flex-wrap:wrap;}
+.entry-issue .photo-strip{margin-top:6px;}
+.photo-thumb-wrap{position:relative;width:72px;height:72px;flex:0 0 auto;}
+.photo-thumb{width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--border);padding:0;background:var(--surface-2);cursor:pointer;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-remove{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;border:2px solid var(--bg);font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+.photo-add-tile{width:72px;height:72px;border-radius:10px;border:1px dashed var(--border);background:none;color:var(--text-faint);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;cursor:pointer;flex:0 0 auto;}
+.photo-loading{font-size:12.5px;color:var(--text-faint);padding:6px 0;}
+
+.lightbox-overlay{position:fixed;inset:0;background:rgba(8,9,10,.96);display:flex;align-items:center;justify-content:center;z-index:55;}
+.lightbox-overlay.hidden{display:none;}
+.lightbox-overlay img{max-width:92vw;max-height:80vh;border-radius:10px;}
+.lightbox-close{position:absolute;top:18px;right:18px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;}
+
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);z-index:10;}
+.tab-btn{flex:1;background:none;border:none;color:var(--text-faint);display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 8px;font-size:11px;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-top:2px solid transparent;}
+.tab-btn.active{color:var(--yellow);border-top-color:var(--yellow);}
+
+.scan-overlay{position:fixed;inset:0;background:rgba(8,9,10,.94);display:flex;align-items:center;justify-content:center;z-index:50;}
+.scan-overlay.hidden{display:none;}
+.scan-modal{width:min(92vw,420px);display:flex;flex-direction:column;align-items:center;gap:16px;}
+.scan-close{align-self:flex-end;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;}
+.scan-frame{position:relative;width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:#000;}
+#reader{width:100%;height:100%;}
+#reader video{width:100% !important;height:100% !important;object-fit:cover;}
+.scan-line{position:absolute;left:6%;right:6%;height:2px;background:var(--yellow);box-shadow:0 0 8px var(--yellow);top:10%;animation:scanmove 1.8s ease-in-out infinite;}
+@keyframes scanmove{0%{top:10%;}50%{top:88%;}100%{top:10%;}}
+@media (prefers-reduced-motion:reduce){.scan-line{animation:none;top:50%;}}
+.scan-status{color:var(--text-muted);font-size:13px;text-align:center;min-height:18px;}
+
+.toast{position:fixed;bottom:96px;left:50%;transform:translate(-50%,10px);background:var(--surface-3);color:var(--text);border:1px solid var(--border);padding:10px 18px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+const ICONS = {
+  camera: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
+  download: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3.5-1 11-11-2.5-2.5-11 11z"/><path d="M14 6l2.5 2.5"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',
+  list: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  sliders: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="16" cy="6" r="2"/><path d="M4 6h10M18 6h2"/><circle cx="8" cy="12" r="2"/><path d="M4 12h2M10 12h10"/><circle cx="18" cy="18" r="2"/><path d="M4 18h12M20 18h0"/></svg>'
+};
+
+let state = { entries: [], customFields: [], activeTab: 'new', editingId: null };
+const hasNativeStorage = !!window.storage;
+const storage = {
+  async get(key){
+    if (hasNativeStorage){
+      try{ return await window.storage.get(key, false); } catch(err){ return null; }
+    }
+    try{
+      const raw = localStorage.getItem('ppf-install-log:'+key);
+      return raw != null ? { key, value: raw, shared:false } : null;
+    } catch(err){ return null; }
+  },
+  async set(key, value){
+    if (hasNativeStorage){
+      try{ return await window.storage.set(key, value, false); } catch(err){ throw err; }
+    }
+    localStorage.setItem('ppf-install-log:'+key, value);
+    return { key, value, shared:false };
+  },
+  async delete(key){
+    if (hasNativeStorage){
+      try{ return await window.storage.delete(key, false); } catch(err){ return null; }
+    }
+    try{ localStorage.removeItem('ppf-install-log:'+key); } catch(err){}
+    return { key, deleted:true, shared:false };
+  }
+};
+let scanner = null;
+let toastTimer = null;
+let formPhotos = [];
+let removedPhotoIds = [];
+let photoById = {};
+let photoCache = {};
+const MAX_PHOTOS = 6;
+let defaultsSeeded = false;
+const DEFAULT_CUSTOM_FIELDS = [
+  { label: 'Soap Used', type: 'text' },
+  { label: 'Slip Mix Ratio', type: 'text' }
+];
+
+function escAttr(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function escHtml(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function makeId(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(36).slice(2); }
+
+function toLocalDatetimeInputValue(date){
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date - tzOffset).toISOString().slice(0,16);
+}
+function formatDateTimeDisplay(dt){
+  if (!dt) return '';
+  const parts = dt.split('T');
+  if (parts.length < 2) return dt;
+  const [y,m,d] = parts[0].split('-');
+  let [hh,mm] = parts[1].split(':');
+  let h = parseInt(hh,10);
+  const ampm = h>=12 ? 'PM':'AM';
+  h = h%12; if (h===0) h=12;
+  return `${m}/${d}/${y} ${h}:${mm} ${ampm}`;
+}
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> el.classList.remove('show'), 2200);
+}
+
+/* ---------- photos ---------- */
+function resizeImageFile(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error('read failed'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=> reject(new Error('decode failed'));
+      img.onload = ()=>{
+        let width = img.width, height = img.height;
+        if (width > height && width > maxDim){ height = Math.round(height * maxDim / width); width = maxDim; }
+        else if (height >= width && height > maxDim){ width = Math.round(width * maxDim / height); height = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePhotoFiles(fileList){
+  const room = MAX_PHOTOS - formPhotos.length;
+  if (room <= 0){ showToast(`Up to ${MAX_PHOTOS} photos per entry`); return; }
+  const files = Array.from(fileList).slice(0, room);
+  for (const file of files){
+    try{
+      const dataUrl = await resizeImageFile(file, 1024, 0.7);
+      const id = makeId();
+      formPhotos.push({ id, dataUrl });
+      photoById[id] = dataUrl;
+    } catch(err){ showToast('Could not add that photo'); }
+  }
+  renderPhotoStrip();
+}
+
+function renderPhotoStrip(){
+  const el = document.getElementById('photo-strip');
+  if (!el) return;
+  const thumbs = formPhotos.map(p=>`
+    <div class="photo-thumb-wrap">
+      <button type="button" class="photo-thumb" data-action="view-photo" data-id="${p.id}"><img src="${p.dataUrl}" alt="Issue photo"></button>
+      <button type="button" class="photo-remove" data-action="remove-photo" data-id="${p.id}" aria-label="Remove photo">&#10005;</button>
+    </div>
+  `).join('');
+  const addTile = formPhotos.length < MAX_PHOTOS ? `<button type="button" class="photo-add-tile" data-action="add-photo">${ICONS.camera}<span>Add</span></button>` : '';
+  el.innerHTML = thumbs + addTile;
+}
+
+async function loadEntryPhotos(entryId, ids){
+  if (photoCache[entryId]) return photoCache[entryId];
+  const loaded = [];
+  for (const id of ids){
+    try{
+      const res = await storage.get('photo:'+id);
+      if (res && res.value){ loaded.push({ id, dataUrl: res.value }); photoById[id] = res.value; }
+    } catch(err){ /* photo missing - skip it */ }
+  }
+  photoCache[entryId] = loaded;
+  return loaded;
+}
+
+function openLightbox(dataUrl){
+  if (!dataUrl) return;
+  document.getElementById('lightbox-img').src = dataUrl;
+  document.getElementById('lightboxOverlay').classList.remove('hidden');
+}
+function closeLightbox(){
+  document.getElementById('lightboxOverlay').classList.add('hidden');
+  document.getElementById('lightbox-img').src = '';
+}
+
+function cleanupRemovedPhotos(){
+  if (removedPhotoIds.length){
+    removedPhotoIds.forEach(id=>{ storage.delete('photo:'+id); });
+  }
+  removedPhotoIds = [];
+}
+
+/* ---------- persistence ---------- */
+async function loadData(){
+  try{
+    const res = await storage.get('app-data');
+    if (res && res.value){
+      const parsed = JSON.parse(res.value);
+      state.entries = parsed.entries || [];
+      state.customFields = parsed.customFields || [];
+      defaultsSeeded = !!parsed.defaultsSeeded;
+    }
+  } catch(err){ /* no saved data yet */ }
+
+  if (!defaultsSeeded){
+    DEFAULT_CUSTOM_FIELDS.forEach(def=>{
+      const exists = state.customFields.some(f=> f.label.trim().toLowerCase() === def.label.toLowerCase());
+      if (!exists) state.customFields.push({ id: makeId(), label: def.label, type: def.type });
+    });
+    defaultsSeeded = true;
+    persist();
+  }
+  render();
+}
+async function persist(){
+  try{
+    await storage.set('app-data', JSON.stringify({ entries: state.entries, customFields: state.customFields, defaultsSeeded }));
+  } catch(err){
+    console.error('Storage error', err);
+    showToast('Could not save - storage error');
+  }
+}
+
+/* ---------- rendering ---------- */
+function renderShell(){
+  document.getElementById('root').innerHTML = `
+    <div class="app">
+      <header class="topbar"><div class="brand"><span class="brand-mark">&#9637;</span><span>PPF INSTALL LOG</span></div></header>
+      <main id="main" class="main"></main>
+      <nav class="tabbar">
+        <button id="tab-new" class="tab-btn" data-action="set-tab" data-tab="new">${ICONS.plus}<span>New</span></button>
+        <button id="tab-log" class="tab-btn" data-action="set-tab" data-tab="log">${ICONS.list}<span>Log</span></button>
+        <button id="tab-fields" class="tab-btn" data-action="set-tab" data-tab="fields">${ICONS.sliders}<span>Fields</span></button>
+      </nav>
+    </div>
+    <div id="scanOverlay" class="scan-overlay hidden">
+      <div class="scan-modal">
+        <button type="button" class="scan-close" data-action="close-scanner" aria-label="Close scanner">&#10005;</button>
+        <div class="scan-frame"><div id="reader"></div><div class="scan-line"></div></div>
+        <div id="scanStatus" class="scan-status"></div>
+      </div>
+    </div>
+    <div id="lightboxOverlay" class="lightbox-overlay hidden">
+      <button type="button" class="lightbox-close" data-action="close-lightbox" aria-label="Close photo">&#10005;</button>
+      <img id="lightbox-img" src="" alt="Issue photo">
+    </div>
+    <div id="toast" class="toast"></div>
+  `;
+}
+
+function render(){
+  const t = document.getElementById('tab-new');
+  if (!t) return;
+  document.getElementById('tab-new').classList.toggle('active', state.activeTab==='new');
+  document.getElementById('tab-log').classList.toggle('active', state.activeTab==='log');
+  document.getElementById('tab-fields').classList.toggle('active', state.activeTab==='fields');
+  const main = document.getElementById('main');
+  if (state.activeTab==='new'){
+    main.innerHTML = renderNewTab();
+    renderPhotoStrip();
+    const photoInput = document.getElementById('photo-input');
+    if (photoInput) photoInput.addEventListener('change', (ev)=>{ handlePhotoFiles(ev.target.files); photoInput.value = ''; });
+  } else if (state.activeTab==='log'){
+    main.innerHTML = renderLogTab();
+    attachLogSearchHandler();
+  } else {
+    main.innerHTML = renderFieldsTab();
+  }
+}
+
+function renderNewTab(){
+  const editing = state.editingId ? state.entries.find(e=>e.id===state.editingId) : null;
+  const e = editing || {};
+  const now = toLocalDatetimeInputValue(new Date());
+  const installerOptions = [...new Set(state.entries.map(x=>x.installer).filter(Boolean))];
+  const vehicleOptions = [...new Set(state.entries.map(x=>x.vehicle).filter(Boolean))];
+  const unit = (e.ambientTemp && e.ambientTemp.unit) || 'F';
+  return `
+    <form class="sheet" onsubmit="return false;">
+      <div class="eyebrow">${editing ? 'EDIT ENTRY' : 'NEW ENTRY'}</div>
+      <div class="field">
+        <label for="f-installer">Installer</label>
+        <input id="f-installer" list="installer-list" placeholder="Name" value="${escAttr(e.installer||'')}">
+        <datalist id="installer-list">${installerOptions.map(o=>`<option value="${escAttr(o)}">`).join('')}</datalist>
+      </div>
+      <div class="field">
+        <label for="f-vehicle">Vehicle <span class="req">*</span></label>
+        <input id="f-vehicle" list="vehicle-list" placeholder="e.g. 2023 Tesla Model Y" value="${escAttr(e.vehicle||'')}">
+        <datalist id="vehicle-list">${vehicleOptions.map(o=>`<option value="${escAttr(o)}">`).join('')}</datalist>
+      </div>
+      <div class="field">
+        <label for="f-paint">Paint Color</label>
+        <input id="f-paint" placeholder="e.g. Pearl White" value="${escAttr(e.paintColor||'')}">
+      </div>
+      <div class="field">
+        <label for="f-roll">Roll Number <span class="req">*</span></label>
+        <div class="roll-row">
+          <input id="f-roll" class="input-barcode" placeholder="Scan or type" value="${escAttr(e.rollNumber||'')}">
+          <button type="button" class="scan-btn" data-action="scan-roll" aria-label="Scan barcode">${ICONS.camera}</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-issue">Issue</label>
+        <textarea id="f-issue" rows="2" placeholder="Anything to flag about this install">${escHtml(e.issue||'')}</textarea>
+      </div>
+      <div class="field">
+        <label>Photos <span class="hint-inline">optional, up to ${MAX_PHOTOS}</span></label>
+        <div id="photo-strip" class="photo-strip"></div>
+        <input id="photo-input" type="file" accept="image/*" capture="environment" multiple style="display:none">
+      </div>
+      <div class="field">
+        <label for="f-datetime">Date &amp; Time</label>
+        <input id="f-datetime" type="datetime-local" value="${e.dateTime || now}">
+      </div>
+      <div class="field">
+        <label for="f-temp">Ambient Temperature</label>
+        <div class="temp-row" data-unit-wrap data-unit="${unit}">
+          <input id="f-temp" type="number" inputmode="decimal" placeholder="72" value="${escAttr(e.ambientTemp ? e.ambientTemp.value : '')}">
+          <div class="unit-toggle">
+            <button type="button" class="${unit==='F'?'active':''}" data-action="toggle-unit" data-unit="F">&deg;F</button>
+            <button type="button" class="${unit==='C'?'active':''}" data-action="toggle-unit" data-unit="C">&deg;C</button>
+          </div>
+        </div>
+      </div>
+      ${state.customFields.map(f=>`
+        <div class="field">
+          <label for="f-custom-${f.id}">${escHtml(f.label)}</label>
+          <input id="f-custom-${f.id}" type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" value="${escAttr(e.custom && e.custom[f.id] || '')}">
+        </div>
+      `).join('')}
+      <div class="actions">
+        ${editing ? `<button type="button" class="btn btn-ghost" data-action="cancel-edit">Cancel</button>` : ''}
+        <button type="button" class="btn btn-primary" data-action="save-entry">${editing ? 'Update Entry' : 'Save Entry'}</button>
+      </div>
+    </form>
+  `;
+}
+
+function renderEntryCard(e){
+  const searchBlob = [e.vehicle,e.installer,e.rollNumber].join(' ').toLowerCase();
+  const hasPhotos = e.photos && e.photos.length;
+  return `
+    <div class="entry-card" data-search="${escAttr(searchBlob)}">
+      <button type="button" class="entry-head" data-action="toggle-card" data-id="${e.id}">
+        <div class="entry-main">
+          <div class="entry-vehicle">${escHtml(e.vehicle || 'Unspecified vehicle')}</div>
+          <div class="entry-sub">${escHtml(e.installer || '\u2014')} &middot; ${formatDateTimeDisplay(e.dateTime)}</div>
+        </div>
+        <div class="entry-roll">${escHtml(e.rollNumber||'')}</div>
+      </button>
+      <div class="entry-body">
+        <div class="detail-grid">
+          <div><span>Paint Color</span><strong>${escHtml(e.paintColor || '\u2014')}</strong></div>
+          <div><span>Ambient Temp</span><strong>${e.ambientTemp && e.ambientTemp.value!=='' && e.ambientTemp.value!=null ? `${escHtml(e.ambientTemp.value)}&deg;${e.ambientTemp.unit}` : '\u2014'}</strong></div>
+          ${state.customFields.map(f=>`<div><span>${escHtml(f.label)}</span><strong>${escHtml((e.custom && e.custom[f.id]) || '\u2014')}</strong></div>`).join('')}
+        </div>
+        ${e.issue ? `<div class="entry-issue"><span>Issue</span><p>${escHtml(e.issue)}</p></div>` : ''}
+        ${hasPhotos ? `<div class="entry-issue"><span>Photos</span><div class="photo-strip" id="photos-${e.id}"></div></div>` : ''}
+        <div class="entry-actions">
+          <button type="button" class="btn btn-ghost" data-action="edit-entry" data-id="${e.id}">${ICONS.edit} Edit</button>
+          <button type="button" class="btn btn-danger" data-action="delete-entry" data-id="${e.id}">${ICONS.trash} Delete</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLogTab(){
+  const sorted = [...state.entries].sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
+  return `
+    <div class="sheet">
+      <div class="eyebrow">INSTALL LOG</div>
+      <div class="log-toolbar">
+        <input id="log-search" type="search" placeholder="Search vehicle, installer, roll #">
+        <button type="button" class="btn btn-outline" data-action="export-csv">${ICONS.download} Export CSV</button>
+      </div>
+      <div id="entry-list">
+        ${sorted.length ? sorted.map(renderEntryCard).join('') : `
+          <div class="empty-state">
+            <div class="empty-title">No installs logged yet</div>
+            <div class="empty-sub">Add your first entry from the New tab.</div>
+          </div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderFieldsTab(){
+  return `
+    <div class="sheet">
+      <div class="eyebrow">CUSTOM FIELDS</div>
+      <p class="hint">Add extra fields to track on every install &mdash; they'll show up on the New Entry form and in your CSV export.</p>
+      <div class="add-field-row">
+        <input id="nf-label" placeholder="Field name (e.g. Film Brand)">
+        <select id="nf-type">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="date">Date</option>
+        </select>
+        <button type="button" class="btn btn-primary" data-action="add-field">Add</button>
+      </div>
+      <div class="field-list">
+        ${state.customFields.length ? state.customFields.map(f=>`
+          <div class="field-row">
+            <div><strong>${escHtml(f.label)}</strong><span class="tag">${escHtml(f.type)}</span></div>
+            <button type="button" class="icon-btn" data-action="delete-field" data-id="${f.id}" aria-label="Delete field">${ICONS.trash}</button>
+          </div>
+        `).join('') : `<div class="empty-state"><div class="empty-title">No custom fields yet</div><div class="empty-sub">Add one above to track anything else you need.</div></div>`}
+      </div>
+      <div class="danger-zone">
+        <div class="eyebrow eyebrow-danger">DANGER ZONE</div>
+        <button type="button" class="btn btn-danger-outline" data-action="clear-data">Clear all entries</button>
+      </div>
+    </div>
+  `;
+}
+
+function attachLogSearchHandler(){
+  const input = document.getElementById('log-search');
+  if (!input) return;
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim().toLowerCase();
+    document.querySelectorAll('#entry-list .entry-card').forEach(card=>{
+      card.style.display = card.dataset.search.includes(q) ? '' : 'none';
+    });
+  });
+}
+
+/* ---------- actions ---------- */
+async function saveEntry(){
+  const vehicle = document.getElementById('f-vehicle').value.trim();
+  const rollNumber = document.getElementById('f-roll').value.trim();
+  if (!vehicle || !rollNumber){
+    showToast('Vehicle and roll number are required');
+    return;
+  }
+  const installer = document.getElementById('f-installer').value.trim();
+  const issue = document.getElementById('f-issue').value.trim();
+  const dateTime = document.getElementById('f-datetime').value;
+  const paintColor = document.getElementById('f-paint').value.trim();
+  const tempInput = document.getElementById('f-temp').value.trim();
+  const unitWrap = document.querySelector('[data-unit-wrap]');
+  const unit = unitWrap ? unitWrap.dataset.unit : 'F';
+  const custom = {};
+  state.customFields.forEach(f=>{
+    const el = document.getElementById(`f-custom-${f.id}`);
+    custom[f.id] = el ? el.value.trim() : '';
+  });
+
+  const photosToSave = formPhotos.slice();
+  if (photosToSave.length){
+    try{
+      await Promise.all(photosToSave.map(p=> storage.set('photo:'+p.id, p.dataUrl)));
+    } catch(err){
+      showToast('Some photos may not have saved');
+    }
+  }
+  const photoIds = photosToSave.map(p=> p.id);
+
+  if (state.editingId){
+    const idx = state.entries.findIndex(e=>e.id===state.editingId);
+    const savedId = state.editingId;
+    if (idx > -1){
+      state.entries[idx] = { ...state.entries[idx], installer, vehicle, rollNumber, issue, dateTime, paintColor, ambientTemp:{value:tempInput, unit}, custom, photos: photoIds };
+    }
+    state.editingId = null;
+    delete photoCache[savedId];
+    persist();
+    state.activeTab = 'log';
+    render();
+    showToast('Entry updated');
+    cleanupRemovedPhotos();
+  } else {
+    state.entries.push({
+      id: makeId(), installer, vehicle, rollNumber, issue, dateTime, paintColor,
+      ambientTemp: { value: tempInput, unit }, custom, photos: photoIds, createdAt: Date.now()
+    });
+    persist();
+    showToast('Entry saved');
+    document.getElementById('f-vehicle').value = '';
+    document.getElementById('f-roll').value = '';
+    document.getElementById('f-issue').value = '';
+    document.getElementById('f-paint').value = '';
+    document.getElementById('f-temp').value = '';
+    document.getElementById('f-datetime').value = toLocalDatetimeInputValue(new Date());
+    state.customFields.forEach(f=>{
+      const el = document.getElementById(`f-custom-${f.id}`);
+      if (el) el.value = '';
+    });
+    formPhotos = [];
+    renderPhotoStrip();
+    cleanupRemovedPhotos();
+    document.getElementById('f-roll').focus();
+  }
+}
+
+function addCustomField(){
+  const labelEl = document.getElementById('nf-label');
+  const typeEl = document.getElementById('nf-type');
+  const label = labelEl.value.trim();
+  if (!label){ showToast('Give the field a name'); return; }
+  state.customFields.push({ id: makeId(), label, type: typeEl.value });
+  persist();
+  render();
+}
+
+function csvEscape(val){
+  const s = String(val===undefined||val===null?'':val);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+function exportCSV(){
+  const fields = state.customFields;
+  const headers = ['Date & Time','Installer','Vehicle','Paint Color','Roll Number','Issue','Ambient Temp','Photos', ...fields.map(f=>f.label)];
+  const rows = [headers];
+  const sorted = [...state.entries].sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
+  sorted.forEach(e=>{
+    const row = [
+      formatDateTimeDisplay(e.dateTime),
+      e.installer||'', e.vehicle||'', e.paintColor||'', e.rollNumber||'', e.issue||'',
+      (e.ambientTemp && e.ambientTemp.value!=='' && e.ambientTemp.value!=null) ? `${e.ambientTemp.value} deg ${e.ambientTemp.unit}` : '',
+      e.photos && e.photos.length ? String(e.photos.length) : '0'
+    ];
+    fields.forEach(f=> row.push((e.custom && e.custom[f.id]!=null) ? e.custom[f.id] : ''));
+    rows.push(row);
+  });
+  const csvContent = rows.map(r=> r.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob([csvContent], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `ppf-install-log-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- scanner ---------- */
+function openScanner(){
+  document.getElementById('scanOverlay').classList.remove('hidden');
+  const statusEl = document.getElementById('scanStatus');
+  statusEl.textContent = 'Starting camera...';
+  if (typeof Html5Qrcode === 'undefined'){
+    statusEl.textContent = 'Scanner unavailable here - enter the roll number manually.';
+    return;
+  }
+  try{
+    scanner = new Html5Qrcode('reader', {
+      verbose: false,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.DATA_MATRIX
+      ]
+    });
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 } },
+      (decodedText)=>{
+        const rollInput = document.getElementById('f-roll');
+        if (rollInput) rollInput.value = decodedText;
+        closeScanner();
+        showToast('Roll number captured');
+      },
+      ()=>{ /* ignore per-frame scan misses */ }
+    ).then(()=>{ statusEl.textContent = ''; })
+     .catch(()=>{ statusEl.textContent = 'Camera unavailable - enter the roll number manually.'; });
+  } catch(err){
+    statusEl.textContent = 'Camera unavailable - enter the roll number manually.';
+  }
+}
+function closeScanner(){
+  document.getElementById('scanOverlay').classList.add('hidden');
+  if (scanner){
+    scanner.stop().then(()=>{ try{ scanner.clear(); }catch(e){} }).catch(()=>{});
+    scanner = null;
+  }
+}
+
+/* ---------- event delegation ---------- */
+document.addEventListener('click', (ev)=>{
+  const btn = ev.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action==='set-tab'){
+    state.activeTab = btn.dataset.tab;
+    if (state.activeTab !== 'new'){
+      state.editingId = null;
+      formPhotos = [];
+      removedPhotoIds = [];
+    }
+    render();
+  } else if (action==='scan-roll'){
+    openScanner();
+  } else if (action==='close-scanner'){
+    closeScanner();
+  } else if (action==='toggle-unit'){
+    const wrap = btn.closest('[data-unit-wrap]');
+    wrap.dataset.unit = btn.dataset.unit;
+    wrap.querySelectorAll('[data-action="toggle-unit"]').forEach(b=> b.classList.toggle('active', b.dataset.unit===wrap.dataset.unit));
+  } else if (action==='save-entry'){
+    saveEntry();
+  } else if (action==='cancel-edit'){
+    state.editingId = null;
+    state.activeTab = 'log';
+    formPhotos = [];
+    removedPhotoIds = [];
+    render();
+  } else if (action==='edit-entry'){
+    state.editingId = btn.dataset.id;
+    state.activeTab = 'new';
+    const entryToEdit = state.entries.find(x=> x.id === state.editingId);
+    formPhotos = [];
+    removedPhotoIds = [];
+    render();
+    if (entryToEdit && entryToEdit.photos && entryToEdit.photos.length){
+      loadEntryPhotos(entryToEdit.id, entryToEdit.photos).then(photos=>{
+        if (state.activeTab==='new' && state.editingId===entryToEdit.id){
+          formPhotos = photos.slice();
+          renderPhotoStrip();
+        }
+      });
+    }
+  } else if (action==='delete-entry'){
+    if (confirm("Delete this entry? This can't be undone.")){
+      const target = state.entries.find(en=> en.id === btn.dataset.id);
+      state.entries = state.entries.filter(en=> en.id !== btn.dataset.id);
+      persist();
+      render();
+      showToast('Entry deleted');
+      if (target && target.photos){
+        target.photos.forEach(id=>{ storage.delete('photo:'+id); });
+      }
+      delete photoCache[btn.dataset.id];
+    }
+  } else if (action==='toggle-card'){
+    const card = btn.closest('.entry-card');
+    card.classList.toggle('expanded');
+    if (card.classList.contains('expanded')){
+      const entryId = btn.dataset.id;
+      const entry = state.entries.find(x=> x.id === entryId);
+      const container = document.getElementById('photos-'+entryId);
+      if (entry && entry.photos && entry.photos.length && container && !container.dataset.loaded){
+        container.innerHTML = '<div class="photo-loading">Loading photos&hellip;</div>';
+        loadEntryPhotos(entryId, entry.photos).then(photos=>{
+          container.dataset.loaded = '1';
+          container.innerHTML = photos.length
+            ? photos.map(p=>`<button type="button" class="photo-thumb" data-action="view-photo" data-id="${p.id}"><img src="${p.dataUrl}" alt="Issue photo"></button>`).join('')
+            : '<div class="photo-loading">Photos unavailable</div>';
+        });
+      }
+    }
+  } else if (action==='add-photo'){
+    const input = document.getElementById('photo-input');
+    if (input) input.click();
+  } else if (action==='remove-photo'){
+    formPhotos = formPhotos.filter(p=> p.id !== btn.dataset.id);
+    removedPhotoIds.push(btn.dataset.id);
+    renderPhotoStrip();
+  } else if (action==='view-photo'){
+    openLightbox(photoById[btn.dataset.id]);
+  } else if (action==='close-lightbox'){
+    closeLightbox();
+  } else if (action==='export-csv'){
+    if (!state.entries.length){ showToast('No entries to export yet'); }
+    else exportCSV();
+  } else if (action==='add-field'){
+    addCustomField();
+  } else if (action==='delete-field'){
+    if (confirm('Delete this field? Past data for it will no longer be shown or exported.')){
+      state.customFields = state.customFields.filter(f=> f.id !== btn.dataset.id);
+      persist();
+      render();
+    }
+  } else if (action==='clear-data'){
+    if (confirm("Clear ALL install entries? This can't be undone.")){
+      const allPhotoIds = state.entries.flatMap(en=> en.photos || []);
+      state.entries = [];
+      photoCache = {};
+      persist();
+      render();
+      showToast('All entries cleared');
+      allPhotoIds.forEach(id=>{ storage.delete('photo:'+id); });
+    }
+  }
+});
+
+/* ---------- init ---------- */
+renderShell();
+loadData();
+</script>
+</body>
+</html>
